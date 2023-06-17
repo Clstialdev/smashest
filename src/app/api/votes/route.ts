@@ -3,13 +3,7 @@ import { db } from "@/lib/drizzle";
 import { votes } from "@/backend/schema";
 import { sql } from "drizzle-orm";
 
-export async function GET() {
-  const Votes = await db.select().from(votes);
-
-  return NextResponse.json({ result: "GET" });
-}
-
-export async function POST(request: NextRequest) {
+export async function Vote(request: NextRequest) {
   const reqBody = (await request.json()) as {
     id: number;
     name: string;

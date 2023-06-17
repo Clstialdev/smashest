@@ -4,32 +4,42 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState } from "react";
-import { getPokemonsAPI } from "./api/pokemon/route";
+import { PokemonClient } from "pokenode-ts";
 
-const handleVote = async (pokemon: Pokemon) => {
-  try {
-    const votesRes = await fetch("/api/votes", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ id: pokemon.id, name: pokemon.name }),
-    });
+export async function getPokemonsAPI() {
+  const pokeApi = new PokemonClient();
+  const allPokemon = await pokeApi.listPokemons(0, 493);
 
-    if (!votesRes.ok) {
-      throw new Error("Failed to fetch data!");
-    }
-    const votes = await votesRes.json();
+  const formattedPokemon = allPokemon.results.map((p, index: number) => ({
+    id: index + 1,
+    name: (p as { name: string }).name,
+    spriteUrl: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${
+      index + 1
+    }.png`,
+  }));
 
-    return votes as number[];
-  } catch (error) {
-    console.log(error);
+  // Recommendation: handle errors
+  if (!allPokemon) {
+    throw new Error("Failed to fetch data");
   }
-};
+
+  const randomInt1 = Math.floor(Math.random() * 496);
+  const randomInt2 = Math.floor(Math.random() * 496);
+
+  const choices = [formattedPokemon[randomInt1], formattedPokemon[randomInt2]];
+
+  console.log(choices);
+
+  return choices;
+}
 
 export default async function HomePage() {
   const pokemons = (await getPokemonsAPI()) as Pokemon[];
+
+  // const handleVote = async (pokemon: Pokemon) => {
+  //   const response = await Vote(pokemon);
+  //   console.log(response);
+  // };
 
   return (
     <main className="h-screen w-full justify-center bg-neutral">
