@@ -1,7 +1,6 @@
-import { NextResponse } from "next/server";
 import { PokemonClient } from "pokenode-ts";
 
-export async function GET() {
+export async function getPokemonsAPI() {
   const pokeApi = new PokemonClient();
   const allPokemon = await pokeApi.listPokemons(0, 493);
 
@@ -25,5 +24,5 @@ export async function GET() {
 
   console.log(choices);
 
-  return NextResponse.json({ result: choices as Pokemon[] });
+  return choices;
 }

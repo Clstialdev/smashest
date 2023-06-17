@@ -5,26 +5,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-
-const getPokemons = async () => {
-  try {
-    const PokemonsRes = await fetch("/api/pokemon", {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!PokemonsRes.ok) {
-      throw new Error("Failed to fetch data!");
-    }
-    const Pokemons = await PokemonsRes.json();
-
-    return Pokemons as Pokemon[];
-  } catch (error) {
-    console.log(error);
-  }
-};
+import { getPokemonsAPI } from "./api/pokemon/route";
 
 const handleVote = async (pokemon: Pokemon) => {
   try {
@@ -47,33 +28,8 @@ const handleVote = async (pokemon: Pokemon) => {
   }
 };
 
-export default function HomePage() {
-  const [pokemons, setPokemons] = useState<Pokemon[]>([]);
-
-  const fetchData = async () => {
-    try {
-      const pokemonsRes = await fetch("/api/pokemon", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!pokemonsRes.ok) {
-        throw new Error("Failed to fetch data!");
-      }
-
-      const pokemons = (await pokemonsRes.json()) as { result: Pokemon[] };
-      console.log(pokemons.result);
-      setPokemons(pokemons.result);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
+export default async function HomePage() {
+  const pokemons = (await getPokemonsAPI()) as Pokemon[];
 
   return (
     <main className="h-screen w-full justify-center bg-neutral">
@@ -114,7 +70,6 @@ export default function HomePage() {
                         className="btn-primary btn-block btn text-[16px] font-semibold"
                         onClick={async () => {
                           await handleVote(pokemon);
-                          await fetchData();
                         }}
                       >
                         SMASH!
