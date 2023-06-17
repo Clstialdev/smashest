@@ -4,41 +4,36 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import Link from "next/link";
 import Image from "next/image";
-import { PokemonClient } from "pokenode-ts";
+import { useEffect, useState } from "react";
 
-type Pokemon = {
-  id: number;
-  name: string;
-  spriteUrl: string;
-};
-
-async function getData() {
-  const pokeApi = new PokemonClient();
-  const allPokemon = await pokeApi.listPokemons(0, 493);
-
-  const formattedPokemon = allPokemon.results.map((p, index: number) => ({
-    id: index + 1,
-    name: (p as { name: string }).name,
-    spriteUrl: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${
-      index + 1
-    }.png`,
-  }));
-
-  // Recommendation: handle errors
-  if (!allPokemon) {
-    throw new Error("Failed to fetch data");
-  }
-
-  return formattedPokemon as Pokemon[];
-}
-
-const getVotes = async () => {
+const getPokemons = async () => {
   try {
-    const votesRes = await fetch("/api/votes", {
+    const PokemonsRes = await fetch("/api/pokemon", {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
       },
+    });
+
+    if (!PokemonsRes.ok) {
+      throw new Error("Failed to fetch data!");
+    }
+    const Pokemons = await PokemonsRes.json();
+
+    return Pokemons as Pokemon[];
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const handleVote = async (pokemon: Pokemon) => {
+  try {
+    const votesRes = await fetch("/api/votes", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ id: pokemon.id, name: pokemon.name }),
     });
 
     if (!votesRes.ok) {
@@ -52,13 +47,33 @@ const getVotes = async () => {
   }
 };
 
-export default async function HomePage() {
-  const data = await getData();
-  const currentPokemons = [data[1], data[2]] as Pokemon[];
+export default function HomePage() {
+  const [pokemons, setPokemons] = useState<Pokemon[]>([]);
 
-  const votes = await getVotes();
+  const fetchData = async () => {
+    try {
+      const pokemonsRes = await fetch("/api/pokemon", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-  console.log(votes);
+      if (!pokemonsRes.ok) {
+        throw new Error("Failed to fetch data!");
+      }
+
+      const pokemons = (await pokemonsRes.json()) as { result: Pokemon[] };
+      console.log(pokemons.result);
+      setPokemons(pokemons.result);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   return (
     <main className="h-screen w-full justify-center bg-neutral">
@@ -69,39 +84,48 @@ export default async function HomePage() {
         </Link>
       </header>
 
-      <div className="relative mt-16 grid grid-cols-2 justify-center px-[5%]">
-        <div className="absolute top-1/2 w-full text-center text-5xl font-bold">
-          Vs.
-        </div>
-        {currentPokemons.map((pokemon, index) => (
-          <div key={index} className="flex w-full justify-center">
-            <div className="card w-96 bg-base-200">
-              <figure>
-                <Image
-                  src={pokemon.spriteUrl}
-                  className="pixelated h-[420px]"
-                  width={420}
-                  height={420}
-                  alt=""
-                />
-              </figure>
-              <div className="card-body">
-                <h2 className="card-title capitalize text-primary-content">
-                  {pokemon.name}
-                </h2>
-                <p className="text-primary-content">
-                  Does this pokemon rock your boat?
-                </p>
-                <div className="card-actions mt-4 justify-end">
-                  <button className="btn-primary btn-block btn text-[16px] font-semibold">
-                    SMASH!
-                  </button>
+      {
+        <div className="relative mt-16 grid grid-cols-2 justify-center px-[5%]">
+          <div className="absolute top-1/2 w-full text-center text-5xl font-bold">
+            Vs.
+          </div>
+          {pokemons &&
+            pokemons.map((pokemon, index) => (
+              <div key={index} className="flex w-full justify-center">
+                <div className="card w-96 bg-base-200">
+                  <figure>
+                    <Image
+                      src={pokemon.spriteUrl}
+                      className="pixelated h-[420px]"
+                      width={420}
+                      height={420}
+                      alt=""
+                    />
+                  </figure>
+                  <div className="card-body">
+                    <h2 className="card-title capitalize text-primary-content">
+                      {pokemon.name}
+                    </h2>
+                    <p className="text-primary-content">
+                      Does this pokemon rock your boat?
+                    </p>
+                    <div className="card-actions mt-4 justify-end">
+                      <button
+                        className="btn-primary btn-block btn text-[16px] font-semibold"
+                        onClick={async () => {
+                          await handleVote(pokemon);
+                          await fetchData();
+                        }}
+                      >
+                        SMASH!
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-        ))}
-      </div>
+            ))}
+        </div>
+      }
     </main>
   );
 }
