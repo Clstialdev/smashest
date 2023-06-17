@@ -17,6 +17,9 @@ export default async function HomePage() {
     const pokemonId = formData.get("pokemonId");
     const pokenum = parseInt(pokemonId as string);
     const pokemonName = formData.get("pokemonName") as string;
+    const secondPokemonId = formData.get("secondPokemonId");
+    const pokenum2 = parseInt(secondPokemonId as string);
+    const secondPokemonName = formData.get("secondPokemonName") as string;
 
     const update = await db
       .insert(votes)
@@ -30,6 +33,21 @@ export default async function HomePage() {
         set: {
           name: pokemonName,
           votes: sql`${votes.votes} + 1`,
+        },
+      });
+
+    const update2 = await db
+      .insert(votes)
+      .values({
+        id: pokenum2,
+        name: secondPokemonName,
+        votes: 0,
+      })
+      .onConflictDoUpdate({
+        target: votes.id,
+        set: {
+          name: secondPokemonName,
+          votes: sql`${votes.votes} - 1`,
         },
       });
 
@@ -51,54 +69,71 @@ export default async function HomePage() {
             Vs.
           </div>
           {pokemons &&
-            pokemons.map((pokemon, index) => (
-              <div key={index} className="flex w-full justify-center">
-                <div className="card w-96 bg-base-200">
-                  <figure>
-                    <Image
-                      src={pokemon.spriteUrl}
-                      className="pixelated h-[420px]"
-                      width={420}
-                      height={420}
-                      alt=""
-                    />
-                  </figure>
-                  <div className="card-body">
-                    <h2 className="card-title capitalize text-primary-content">
-                      {pokemon.name}
-                    </h2>
-                    <p className="text-primary-content">
-                      Does this pokemon rock your boat?
-                    </p>
-                    <div className="card-actions mt-4 justify-end">
-                      <form
-                        action={updateVotes}
-                        className="flex flex-col items-center"
-                      >
-                        <input
-                          type="text"
-                          name="pokemonId"
-                          value={pokemon.id}
-                          className="hidden"
-                        />
-                        <input
-                          type="text"
-                          name="pokemonName"
-                          value={pokemon.name}
-                          className="hidden"
-                        />
-                        <button
-                          className="btn-primary btn-block btn text-[16px] font-semibold"
-                          type="submit"
+            pokemons.map((pokemon, index) => {
+              const secondPokemonIndex = (index + 1) % pokemons.length;
+              const secondPokemon = pokemons[secondPokemonIndex];
+
+              return (
+                <div key={index} className="flex w-full justify-center">
+                  <div className="card w-96 bg-base-200">
+                    <figure>
+                      <Image
+                        src={pokemon.spriteUrl}
+                        className="pixelated h-[420px]"
+                        width={420}
+                        height={420}
+                        alt=""
+                      />
+                    </figure>
+                    <div className="card-body">
+                      <h2 className="card-title capitalize text-primary-content">
+                        {pokemon.name}
+                      </h2>
+                      <p className="text-primary-content">
+                        Does this pokemon rock your boat?
+                      </p>
+                      <div className="card-actions mt-4 justify-end">
+                        <form
+                          action={updateVotes}
+                          className="flex flex-col items-center"
                         >
-                          SMASH!
-                        </button>
-                      </form>
+                          <input
+                            type="text"
+                            name="pokemonId"
+                            value={pokemon.id}
+                            className="hidden"
+                          />
+                          <input
+                            type="text"
+                            name="pokemonName"
+                            value={pokemon.name}
+                            className="hidden"
+                          />
+                          <input
+                            type="text"
+                            name="secondPokemonId"
+                            value={secondPokemon ? secondPokemon.id : ""}
+                            className="hidden"
+                          />
+                          <input
+                            type="text"
+                            name="secondPokemonName"
+                            value={secondPokemon ? secondPokemon.name : ""}
+                            className="hidden"
+                          />
+                          <button
+                            className="btn-primary btn-block btn text-[16px] font-semibold"
+                            type="submit"
+                          >
+                            SMASH!
+                          </button>
+                        </form>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
         </div>
       }
     </main>
