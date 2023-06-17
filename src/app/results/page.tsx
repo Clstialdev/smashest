@@ -2,23 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import Link from "next/link";
 import Image from "next/image";
-import { db } from "@/lib/drizzle";
-import { votes } from "@/backend/schema";
-
-export async function getVotesAPI() {
-  const res = await db.select().from(votes);
-  return res.sort((a, b) => {
-    if (a.votes === null && b.votes === null) {
-      return 0;
-    } else if (a.votes === null) {
-      return 1;
-    } else if (b.votes === null) {
-      return -1;
-    } else {
-      return b.votes - a.votes;
-    }
-  });
-}
+import { getVotesAPI } from "./getResults";
 
 export default async function HomePage() {
   const Votes = await getVotesAPI();
