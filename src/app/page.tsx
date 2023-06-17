@@ -1,10 +1,11 @@
-"use client";
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import Link from "next/link";
 import Image from "next/image";
 import { PokemonClient } from "pokenode-ts";
+import { revalidatePath } from "next/cache";
+import { db } from "@/lib/drizzle";
+import { votes } from "@/backend/schema";
+import { sql } from "drizzle-orm";
+import { NextPage } from "next";
 
 export async function getPokemonsAPI() {
   const pokeApi = new PokemonClient();
@@ -35,11 +36,6 @@ export async function getPokemonsAPI() {
 
 export default async function HomePage() {
   const pokemons = (await getPokemonsAPI()) as Pokemon[];
-
-  // const handleVote = async (pokemon: Pokemon) => {
-  //   const response = await Vote(pokemon);
-  //   console.log(response);
-  // };
 
   return (
     <main className="h-screen w-full justify-center bg-neutral">
@@ -76,14 +72,37 @@ export default async function HomePage() {
                       Does this pokemon rock your boat?
                     </p>
                     <div className="card-actions mt-4 justify-end">
-                      <button
-                        className="btn-primary btn-block btn text-[16px] font-semibold"
-                        onClick={async () => {
-                          await handleVote(pokemon);
+                      <form
+                        action={async () => {
+                          "use server";
+                          // const update = await db
+                          //   .insert(votes)
+                          //   .values({
+                          //     id: pokemon.id,
+                          //     name: pokemon.name,
+                          //     votes: 1,
+                          //   })
+                          //   .onConflictDoUpdate({
+                          //     target: votes.id,
+                          //     set: {
+                          //       name: pokemon.name,
+                          //       votes: sql`${votes.votes} + 1`,
+                          //     },
+                          //   });
+
+                          await console.log("test");
+
+                          revalidatePath("/");
                         }}
+                        className="flex flex-col items-center"
                       >
-                        SMASH!
-                      </button>
+                        <button
+                          className="btn-primary btn-block btn text-[16px] font-semibold"
+                          type="submit"
+                        >
+                          SMASH!
+                        </button>
+                      </form>
                     </div>
                   </div>
                 </div>
