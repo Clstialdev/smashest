@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import Link from "next/link";
 import Image from "next/image";
 import { PokemonClient } from "pokenode-ts";
@@ -5,7 +7,6 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/drizzle";
 import { votes } from "@/backend/schema";
 import { sql } from "drizzle-orm";
-import { NextPage } from "next";
 
 export async function getPokemonsAPI() {
   const pokeApi = new PokemonClient();
@@ -36,6 +37,30 @@ export async function getPokemonsAPI() {
 
 export default async function HomePage() {
   const pokemons = (await getPokemonsAPI()) as Pokemon[];
+
+  const updateVotes = async (formData: FormData) => {
+    "use server";
+    const pokemonId = formData.get("pokemonId");
+    const pokenum = parseInt(pokemonId as string);
+    const pokemonName = formData.get("pokemonName") as string;
+
+    const update = await db
+      .insert(votes)
+      .values({
+        id: pokenum,
+        name: pokemonName,
+        votes: 1,
+      })
+      .onConflictDoUpdate({
+        target: votes.id,
+        set: {
+          name: pokemonName,
+          votes: sql`${votes.votes} + 1`,
+        },
+      });
+
+    revalidatePath("/");
+  };
 
   return (
     <main className="h-screen w-full justify-center bg-neutral">
@@ -73,29 +98,21 @@ export default async function HomePage() {
                     </p>
                     <div className="card-actions mt-4 justify-end">
                       <form
-                        action={async () => {
-                          "use server";
-                          // const update = await db
-                          //   .insert(votes)
-                          //   .values({
-                          //     id: pokemon.id,
-                          //     name: pokemon.name,
-                          //     votes: 1,
-                          //   })
-                          //   .onConflictDoUpdate({
-                          //     target: votes.id,
-                          //     set: {
-                          //       name: pokemon.name,
-                          //       votes: sql`${votes.votes} + 1`,
-                          //     },
-                          //   });
-
-                          await console.log("test");
-
-                          revalidatePath("/");
-                        }}
+                        action={updateVotes}
                         className="flex flex-col items-center"
                       >
+                        <input
+                          type="text"
+                          name="pokemonId"
+                          value={pokemon.id}
+                          className="hidden"
+                        />
+                        <input
+                          type="text"
+                          name="pokemonName"
+                          value={pokemon.name}
+                          className="hidden"
+                        />
                         <button
                           className="btn-primary btn-block btn text-[16px] font-semibold"
                           type="submit"
